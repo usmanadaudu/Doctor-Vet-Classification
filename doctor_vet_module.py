@@ -61,3 +61,77 @@ def nlp_preprocessing(text):
     
     # return preprocessed text
     return text
+
+def get_prediction_per_comment(comment):
+    """
+    This function will make prediction on single comment
+    """
+    # preprocess the comment
+    comment = nlp_preprocessing(comment)
+    
+    # vectorize the preprocessed comment
+    X = vectorizer.transform([comment]).toarray()
+    
+    # get prediction from the stacking classifier in integer form
+    y_pred = s_class.predict(X)
+    
+    # get the class name of the prediction
+    y_pred_class = encoder.classes_[y_pred][0]
+    
+    # return the class name
+    return y_pred_class
+
+def get_overall_prediction(file, comment_header="comments", csv=True):
+    """
+    This function takes in a link to a csv file ordataframe and predict users as either medical doctor,veterinarian or other based on their comments
+    
+    Args
+    df (csv file path or pandas dataframe): file path to csv or dataframe containing comments in column named 'comments', multiple comments separated with '|'
+    comment_header (string): Name of the column containig the comments
+    csv (bool): If True (default), indicates the file is a csv
+                If False, indicates the file is not a csv
+    
+    
+    Output
+    (pandas dataframe): a copy of the datafrme containing the predictions in column named 'Predicted Label'
+ """
+    if csv:
+        # create a dtaframe using the csv file
+        dataset = pd.read_csv(file)
+    else:
+        # make a copy of the dataframe
+        dataset = file.copy()
+    
+    # initialize predictions as empty string
+    dataset.loc[:, "Predicted Label"] = ""
+    
+    # loop through each group of comments to make prediction
+    for i in dataset.index:
+        # extract comments of current user
+        comments = dataset.loc[i, comment_header]
+        
+        # create variable to store the orediction of each comment by the current user
+        predictions = np.array([])
+        
+        # loop through comments made by the user user and make prediction on each
+        for comment in comments.split("|"):
+            # get prediction for the current comment
+            pred = get_prediction_per_comment(comment)
+            
+            # add the prediction to the list of predictions for comments made by current user
+            predictions = np.append(predictions, pred)
+            
+            # if any of the prediction is Veterinarian, ignore the rest
+            if any(predictions == "Veterinarian"):
+                dataset.loc[i, "Predicted Label"] = "Veterinarian"
+                
+            # else if any of the prediction is Medical Doctor, ignore the rest
+            elif any(predictions == "Medical Doctor"):
+                dataset.loc[i, "Predicted Label"] = "Medical Doctor"
+                
+            # else predict the user as Other
+            else:
+                dataset.loc[i, "Predicted Label"] = "Other"
+    
+    # return the dataframe containing the predictions
+    return dataset
