@@ -16,6 +16,7 @@ st.write("[postgresql://niphemi.oyewole:W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-
 
 # import modules
 import re             # for regrex operations
+import pickle
 import string         # for removing punctuations
 import random         # for generating random numbers
 import statistics     # for statistical functions
@@ -346,11 +347,11 @@ View in your timezone:
 
 [0]: https://timee.io/20230823T1200?tl=%5BAMA%5D%20Meet%20the%20Future%20of%20VPN!%20We're%20Savannah%20and%20Furkan%20from%20MysteriumVPN.%20The%20People-Powered%20Alternative%20with%20More%20IPs%20Than%20Many%20Legacy%20VPNs%20Combined.%20Join%20Us%20Live%20on%2023.08%20%40%2012%20PM%20UTC%20and%20Ask%20Your%20Questions%20Now!|View in your timezone:  
 [23.08.2023 at 12 PM UTC][0][deleted]"""
-st.write(txt)
+st.write([txt])
 st.write("After preprocessing")
-st.write(nlp_preprocessing(txt))
+st.write([nlp_preprocessing(txt)])
 
-st.write("Hand Engineering")
+st.header("Hand Engineering")
 st.write("I labbelled a number of samples by hand to form my training set")
 st.write("The way I went about this was that I first merged the two tables together as shown below")
 reddit_user_df = pd.merge(user_comment_df, user_info_df,
@@ -359,6 +360,165 @@ st.write(reddit_user_df.head())
 st.write("Then I splitted all groups of comments into separate comments")
 reddit_user_df_processed = reddit_user_df.copy()
 reddit_user_df_processed["comments"] = reddit_user_df["comments"].apply(nlp_preprocessing)
+
+# create dictionary to store values for the new dataframe
+user_separated_comment_dict = {
+    "username" : [],
+    "comment" : [],
+    "subreddit" : [],
+    "former_index" : []
+}
+
+# loop through the data and save each comment as a separate entry
+for i in reddit_user_df_processed.index:
+    for comment in reddit_user_df_processed.iloc[i]["comments"].split("|"):
+        user_separated_comment_dict["username"].append(reddit_user_df_processed.iloc[i]["username"])
+        user_separated_comment_dict["comment"].append(comment.strip())
+        user_separated_comment_dict["subreddit"].append(reddit_user_df_processed.iloc[i]["subreddit"])
+        user_separated_comment_dict["former_index"].append(i)
+        
+# convert the dictionary above to pandas dataframe
+user_separated_comment_df = pd.DataFrame(user_separated_comment_dict)
+
+st.write(user_separated_comment_df.head(10))
+st.write("""
+'former_index' which is the index of corresponding sample in the unprocessed dataframe is added in order to aid during labelling
+
+Processed comments usually loose meaning or context when read by humans. Therefore the unprocessed form would be used for labelling
+""")
+st.write("Looking at the number comments in each of the subreddits as shown below")
+st.write(user_separated_comment_df['subreddit'].value_counts())
+st.write("I chose all the medicine, vet, HeliumNetwork and orchid subreddits because there are less than 30 comments in these subreddits. Then, I chose 30 comments in each of the MysteriumNetwork subreddit and Veterinary")
+
+st.write("The first 5 entries in the training set after labelling are shown below")
+train_set_df = pd.read_csv("train_set.csv")
+st.write(train_set_df.head())
+
+st.header("Model Building")
+st.write("**My Approach to Building the Model**")
+st.write("""
+The following are the approaches used to solve this problem
+
+1.  All users would be categorized as others unless proven otherwise from the comments
+2.  Comments are independent of each other (meaning a comment is not continued in another comment)
+3.  Comments made by a user would be splitted and considered separate data to capture the independence among comments
+4.  When there is indication of user's category in a comment, other comments do not matter (i.e. when users state that they are doctors in a comment, even if other comment are not related to this, the user is still a doctor
+5.  Any user automatically found from above to not be a doctor or veterinarian would be automatically classified as Others
+""")
+
+st.write("**Preprocessing**")
+st.write("""Just before building my model, another round of preprocessing (apart from the ones above) was done. These are:
+1.  Vectorization: The comments in each dataset were vectorized using 'TfidfVectorizer' 
+2.  The target label was encoded using LabelEncoder as shown below
+    Label       ->  Encoding \n
+Medical Doctor  ->     0 \n
+Other           ->     1 \n
+Veterinarian    ->     2
+""")
+
+st.write("The training set was splitted into 80% for training set and 20% for validation set")
+# import the training dataset
+data = pd.read_csv("train_set.csv")
+# add the preprocessed comments as a new column in the dataframe
+data["processed_comment"] = data["comment"].apply(nlp_preprocessing)
+# initialize vactorizer for the comments
+with open("vectorizer.pkl", "rb") as file:
+    vectorizer = pickle.load(file)
+with open("encoder.pkl", "rb") as file:
+    encoder = pickle.load(file)
+    
+X = vectorizer.fit_transform(data["processed_comment"].values).toarray()
+labels = data["Label"]
+y = encoder.fit_transform(labels)
+# split dataset into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+st.write("The various model built and their performances are summarized below")
+st.write("**XGBoost**")
+st.write("Accuracy: 0.75")
+st.write("Classification Report")
+st.write("""\n\n                precision    recall  f1-score   support\n\nMedical Doctor       0.33      0.50      0.40         2\n\n         Other       0.95      0.84      0.89        25\n\n  Veterinarian       0.57      0.80      0.67         5\n\n      accuracy                           0.81        32\n\n                                                                                                  macro avg       0.62      0.71      0.65        32\n  weighted avg       0.86      0.81      0.83        32\n""")
+st.write("""
+                precision    recall  f1-score   support
+
+Medical Doctor       0.33      0.50      0.40         2
+         Other       0.95      0.84      0.89        25
+  Veterinarian       0.57      0.80      0.67         5
+
+      accuracy                           0.81        32
+     macro avg       0.62      0.71      0.65        32
+  weighted avg       0.86      0.81      0.83        32
+""")
+st.write()
+
+st.write("**MultinomialNB**")
+st.write("Accuracy: 0.78125")
+st.write("""
+                precision    recall  f1-score   support
+
+Medical Doctor       0.00      0.00      0.00         2
+         Other       0.78      1.00      0.88        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.78        32
+     macro avg       0.26      0.33      0.29        32
+  weighted avg       0.61      0.78      0.69        32
+""")
+st.write()
+
+st.write("**kNN**")
+st.write("Accuracy: 0.78125")
+st.write("""
+                precision    recall  f1-score   support
+
+Medical Doctor       0.00      0.00      0.00         2
+         Other       0.78      1.00      0.88        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.78        32
+     macro avg       0.26      0.33      0.29        32
+  weighted avg       0.61      0.78      0.69        32
+""")
+st.write()
+
+st.write("**AdaBoost**")
+st.write("Accuracy: 0.75")
+st.write("""
+                precision    recall  f1-score   support
+
+Medical Doctor       1.00      0.50      0.67         2
+         Other       0.79      0.92      0.85        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.75        32
+     macro avg       0.60      0.47      0.51        32
+  weighted avg       0.68      0.75      0.71        32
+""")
+st.write()
+
+st.write("** Stacking (Combining kNN and XGBoost)**")
+st.write("Accuracy: 0.8125")
+st.write("""
+                precision    recall  f1-score   support
+
+Medical Doctor       0.33      0.50      0.40         2
+         Other       0.95      0.84      0.89        25
+  Veterinarian       0.57      0.80      0.67         5
+
+      accuracy                           0.81        32
+     macro avg       0.62      0.71      0.65        32
+  weighted avg       0.86      0.81      0.83        32
+""")
+st.write()
+
+st.write("This result is the best so far comparing the performance on all the classes")
+st.write("Checking the classifcation of each model, It is seen that the stacking classifier which makes use of Multinomial Naive Bayes and kNN Classifier performed best")
+st.write("It was also found that the performance of the Multinomial Model was extremely poor despite having high accuracy")
+st.write("I will be going with the **Stacking Classifier**")
+
+st.header("Making Predictions")
+# get comment
+text_input = st.text_input('Enter some text')
+
          
          
          
