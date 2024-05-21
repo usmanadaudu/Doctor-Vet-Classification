@@ -82,7 +82,7 @@ def get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
     # return the class name
     return y_pred_class
 
-def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, encoder,
+def get_overall_prediction(model_input, np, pd, re, string, stopwords, vectorizer, encoder,
                            model, comment_header="comments", file_type="csv"):
     """
     This function takes in a link to a csv file ordataframe and predict users as either medical doctor,veterinarian or other based on their comments
@@ -100,10 +100,10 @@ def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, enco
     if file_type != "text":
         if file_type == "csv":
             # create a dtaframe using the csv file
-            dataset = pd.read_csv(file)
+            dataset = pd.read_csv(model_input)
         elif file_type == "dataframe":
             # make a copy of the dataframe
-            dataset = file.copy()
+            dataset = model_input.copy()
 
         # initialize predictions as empty string
         dataset.loc[:, "Predicted Label"] = ""
@@ -141,7 +141,7 @@ def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, enco
         return dataset
     else:
         predictions = np.array([])
-        for comment in file.split("|"):
+        for comment in model_input.split("|"):
             # get prediction for the current comment
             pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
                                               encoder, model)

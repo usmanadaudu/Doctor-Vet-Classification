@@ -43,7 +43,7 @@ st.code("postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler
 conn_str = "postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow"
 
 # create connection to the databse
-# engine =  create_engine(conn_str)
+engine =  create_engine(conn_str)
 
 st.write("First, lets take a look at the tables in the database")
 
@@ -60,8 +60,8 @@ AND
 """
 
 # retrieve the tables in a dataframe
-# tables_df = pd.read_sql_query(sql_for_tables, engine)
-# st.write(tables_df)
+tables_df = pd.read_sql_query(sql_for_tables, engine)
+st.write(tables_df)
 
 st.write("""There are two tables in the database as shown above
 
@@ -73,8 +73,9 @@ SELECT
 FROM
     public.reddit_usernames_comments;
 """
-# user_comment_df = pd.read_sql_query(sql_for_table1, engine)
-user_comment_df = pd.read_csv("reddit_usernames_comments.csv")
+# if the table cannot be rerieved from the database, use the csv file saved
+user_comment_df = pd.read_sql_query(sql_for_table1, engine)
+# user_comment_df = pd.read_csv("reddit_usernames_comments.csv")
 
 sql_for_table2 = """
 SELECT
@@ -82,8 +83,9 @@ SELECT
 FROM
     public.reddit_usernames;
 """
-# user_info_df = pd.read_sql_query(sql_for_table2, engine)
-user_info_df = pd.read_csv("reddit_usernames.csv")
+# if the table cannot be rerieved from the database, use the csv file saved
+user_info_df = pd.read_sql_query(sql_for_table2, engine)
+# user_info_df = pd.read_csv("reddit_usernames.csv")
 
 st.write("Lets take a look at the tables one after the other")
 st.write("First Table")
@@ -477,7 +479,7 @@ acc = accuracy_score(y_val, y_pred)
 st.write("Accuracy: ", acc)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_, zero_division=0)}")
 
 st.write("**kNN Model**")
 # initilize the kNN Classifier
@@ -554,7 +556,7 @@ file_type = "text"
 
 
 
-if st.button("Make Prediction"):
+if st.button("Make Prediction", type="primary"):
     prediction = get_overall_prediction(filepath, np, pd, re, string,
                                          stopwords, vectorizer, encoder,
                                          model, comment_header, file_type)
