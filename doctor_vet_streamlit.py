@@ -1,12 +1,13 @@
 # import modules
 import re             # for regrex operations
+import nltk
 import pickle
 import string         # for removing punctuations
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
 import streamlit as st
+nltk.download('stopwords')                        # for getting stopwords
 from xgboost import XGBClassifier                 # XGBoost model
-from nltk.corpus import stopwords                 # for getting stopwords
 from sqlalchemy import create_engine              # for connecting to database
 from sklearn.metrics import accuracy_score        # for getting prediction accuracy
 from sklearn.naive_bayes import MultinomialNB     # Multinimial Naive Bayes model
