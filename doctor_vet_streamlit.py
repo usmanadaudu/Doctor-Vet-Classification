@@ -517,7 +517,9 @@ st.write("I will be going with the **Stacking Classifier**")
 
 st.header("Making Predictions")
 # get comment
-text_input = st.text_input('Enter some text')
+user_comments = st.text_input('Enter the user comment here')
+
+
 
          
          
