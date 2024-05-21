@@ -1,5 +1,5 @@
 
-def nlp_preprocessing(text):
+def nlp_preprocessing(text, re, string, stopwords):
     """
     This function applies preprocesses texts"
     
@@ -8,7 +8,7 @@ def nlp_preprocessing(text):
     
     output
     (string): preprocessed text
-    """ 
+    """    
     # remove web links from text
     text = re.sub(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
                   "", text.strip())
@@ -62,18 +62,19 @@ def nlp_preprocessing(text):
     # return preprocessed text
     return text
 
-def get_prediction_per_comment(comment):
+def get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
+                               encoder, model):
     """
     This function will make prediction on single comment
     """
     # preprocess the comment
-    comment = nlp_preprocessing(comment)
+    comment = nlp_preprocessing(comment, re, string, stopwords)
     
     # vectorize the preprocessed comment
     X = vectorizer.transform([comment]).toarray()
     
     # get prediction from the stacking classifier in integer form
-    y_pred = s_class.predict(X)
+    y_pred = model.predict(X)
     
     # get the class name of the prediction
     y_pred_class = encoder.classes_[y_pred][0]
@@ -81,7 +82,8 @@ def get_prediction_per_comment(comment):
     # return the class name
     return y_pred_class
 
-def get_overall_prediction(file, comment_header="comments", csv=True):
+def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, encoder,
+                           model, comment_header="comments", csv=True):
     """
     This function takes in a link to a csv file ordataframe and predict users as either medical doctor,veterinarian or other based on their comments
     
@@ -116,7 +118,8 @@ def get_overall_prediction(file, comment_header="comments", csv=True):
         # loop through comments made by the user user and make prediction on each
         for comment in comments.split("|"):
             # get prediction for the current comment
-            pred = get_prediction_per_comment(comment)
+            pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
+                                              encoder, model)
             
             # add the prediction to the list of predictions for comments made by current user
             predictions = np.append(predictions, pred)
