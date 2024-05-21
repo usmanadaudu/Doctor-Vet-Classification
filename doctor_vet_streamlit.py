@@ -1,32 +1,13 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Title of the app
-st.title("Doctor and Veterinary Classification App")
-
-# Display text
-st.write("This notebook is for building a model which will correctly classify a number of given reddit users as practicing doctors, practicng veterinary or others based on each user's comments")
-
-# Display text
-st.write("The dataset for this task would be sourced from a database whose link is given as")
-
-st.write("[postgresql://niphemi.oyewole:W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?statusColor=F8F8F8&env=&name=redditors%20db&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=false](postgresql://niphemi.oyewole:W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?statusColor=F8F8F8&env=&name=redditors%20db&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=false)")
-
 # import modules
 import re             # for regrex operations
 import pickle
 import string         # for removing punctuations
-import random         # for generating random numbers
-import statistics     # for statistical functions
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
-import matplotlib.pyplot as plt                   # for making plots
+import streamlit as st
 from xgboost import XGBClassifier                 # XGBoost model
 from nltk.corpus import stopwords                 # for getting stopwords
 from sqlalchemy import create_engine              # for connecting to database
-from nltk.tokenize import word_tokenize           # for tokenizing words
 from sklearn.metrics import accuracy_score        # for getting prediction accuracy
 from sklearn.naive_bayes import MultinomialNB     # Multinimial Naive Bayes model
 from sklearn.preprocessing import LabelEncoder    # for encoding target class
@@ -34,15 +15,35 @@ from sklearn.ensemble import AdaBoostClassifier   # AdaBoost model
 from sklearn.tree import DecisionTreeClassifier   # Decision Tree model
 from sklearn.ensemble import StackingClassifier   # Stacking Ensemble model
 from sklearn.metrics import classification_report     # for generating classification report
+from doctor_vet_module import nlp_preprocessing
 from sklearn.neighbors import KNeighborsClassifier    # k Nearest Neighbour model
 from sklearn.model_selection import train_test_split  # for splitting into trainning and test set
+from doctor_vet_module import get_overall_prediction
+from doctor_vet_module import get_prediction_per_comment
 from sklearn.feature_extraction.text import TfidfVectorizer  # for vectorizing words
+
+# Title of the app
+st.title("Doctor and Veterinary Classification")
+
+# Display text
+st.write("This app is to give little explanation on building a model which will correctly classify a number of given reddit users as practicing doctors, practicng veterinary or others based on each user's comments I did")
+
+st.write("For more in-depth view of the model building processes, check the 'Doctor-vet-classification-model-bulding' notebook")
+
+# Display text
+st.write("The dataset for this task was sourced from a database whose link is given as")
+
+st.code("[postgresql://niphemi.oyewole:W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?statusColor=F8F8F8&env=&name=redditors%20db&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=false](postgresql://niphemi.oyewole:W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?statusColor=F8F8F8&env=&name=redditors%20db&tLSMode=0&usePrivateKey=false&safeModeLevel=0&advancedSafeModeLevel=0&driverVersion=0&lazyload=false)")
+
+st.write("The link given raises error when trying to connect, so I used a modified version of the link shown below")
+
+st.code("postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow")
 
 # define the connection link to database
 conn_str = "postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow"
 
 # create connection to the databse
-engine =  create_engine(conn_str)
+# engine =  create_engine(conn_str)
 
 st.write("First, lets take a look at the tables in the database")
 
@@ -59,8 +60,8 @@ AND
 """
 
 # retrieve the tables in a dataframe
-tables_df = pd.read_sql_query(sql_for_tables, engine)
-st.write(tables_df)
+# tables_df = pd.read_sql_query(sql_for_tables, engine)
+# st.write(tables_df)
 
 st.write("""There are two tables in the database as shown above
 
@@ -72,7 +73,8 @@ SELECT
 FROM
     public.reddit_usernames_comments;
 """
-user_comment_df = pd.read_sql_query(sql_for_table1, engine)
+# user_comment_df = pd.read_sql_query(sql_for_table1, engine)
+user_comment_df = pd.read_csv("reddit_usernames_comments.csv")
 
 sql_for_table2 = """
 SELECT
@@ -80,7 +82,8 @@ SELECT
 FROM
     public.reddit_usernames;
 """
-user_info_df = pd.read_sql_query(sql_for_table2, engine)
+# user_info_df = pd.read_sql_query(sql_for_table2, engine)
+user_info_df = pd.read_csv("reddit_usernames.csv")
 
 st.write("Lets take a look at the tables one after the other")
 st.write("First Table")
@@ -98,7 +101,7 @@ Lets look at a comment in order to understand how it is structured
 """)
 # print all comments by first user
 st.write("comments by first user")
-st.write([user_comment_df["comments"][0]])
+st.markdown(f"```\n{user_comment_df['comments'][0]}\n```")
 # split comments into individual comments
 first_comments = [user_comment_df["comments"][0].split("|")]
 
@@ -113,8 +116,8 @@ for comment in first_comments[0]:
     else:
         unique_comment.append(comment)
         
-st.write(f"Length of unique comments for first user: {len(unique_comment)}")
-st.write([" | ".join(unique_comment)])
+st.write("Length of unique comments for first user", len(unique_comment))
+st.markdown(f"```\n{' | '.join(unique_comment)}\n```")
 
 st.write("""It can be seen that the comment column contains multiple comments separated with "|"
 
@@ -133,8 +136,9 @@ for the preprocessing, the various steps that would be done are:\n
 1.  Removing web links\n
 2.  emoving file directories\n
 3.  Removing deleted comments indicated as'[deleted]'
-4.  Removing stopwords. Stopwords are:\n
-""", [stopwords.words('english')],"""
+4.  Removing stopwords. Stopwords are:""")
+st.code(stopwords.words('english'), language="text")
+st.write("""
 5.  Removing punctuations
 6.  Removing non-alphabetic characters
 7.  Reducing multiple adjacent spaces to a single space
@@ -347,12 +351,12 @@ View in your timezone:
 
 [0]: https://timee.io/20230823T1200?tl=%5BAMA%5D%20Meet%20the%20Future%20of%20VPN!%20We're%20Savannah%20and%20Furkan%20from%20MysteriumVPN.%20The%20People-Powered%20Alternative%20with%20More%20IPs%20Than%20Many%20Legacy%20VPNs%20Combined.%20Join%20Us%20Live%20on%2023.08%20%40%2012%20PM%20UTC%20and%20Ask%20Your%20Questions%20Now!|View in your timezone:  
 [23.08.2023 at 12 PM UTC][0][deleted]"""
-st.write([txt])
+st.code(txt, language="text")
 st.write("After preprocessing")
-st.write([nlp_preprocessing(txt)])
+st.code(nlp_preprocessing(txt), language="text")
 
 st.header("Hand Engineering")
-st.write("I labbelled a number of samples by hand to form my training set")
+st.write("I labelled a number of samples by hand to form my training set")
 st.write("The way I went about this was that I first merged the two tables together as shown below")
 reddit_user_df = pd.merge(user_comment_df, user_info_df,
                           on="username", how="left")
@@ -409,12 +413,13 @@ The following are the approaches used to solve this problem
 st.write("**Preprocessing**")
 st.write("""Just before building my model, another round of preprocessing (apart from the ones above) was done. These are:
 1.  Vectorization: The comments in each dataset were vectorized using 'TfidfVectorizer' 
-2.  The target label was encoded using LabelEncoder as shown below
-    Label       ->  Encoding \n
+2.  The target label was encoded using LabelEncoder as shown below""")
+st.markdown(f"""```
+.    Label       ->  Encoding \n
 Medical Doctor  ->     0 \n
 Other           ->     1 \n
 Veterinarian    ->     2
-""")
+\n```""")
 
 st.write("The training set was splitted into 80% for training set and 20% for validation set")
 # import the training dataset
@@ -424,8 +429,12 @@ data["processed_comment"] = data["comment"].apply(nlp_preprocessing)
 # initialize vactorizer for the comments
 with open("vectorizer.pkl", "rb") as file:
     vectorizer = pickle.load(file)
+    
 with open("encoder.pkl", "rb") as file:
     encoder = pickle.load(file)
+    
+with open("doctor_vet_model.pkl", "rb") as file:
+    model = pickle.load(file)
     
 X = vectorizer.fit_transform(data["processed_comment"].values).toarray()
 labels = data["Label"]
@@ -434,81 +443,101 @@ y = encoder.fit_transform(labels)
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 st.write("The various model built and their performances are summarized below")
 st.write("**XGBoost**")
-st.write("Accuracy: 0.75")
+# initilize the XFBoost Classifier
+xgb_model = XGBClassifier()
+
+# train the model on the training set
+xgb_model.fit(X_train, y_train)
+
+# prdict labels for the validation set
+y_pred = xgb_model.predict(X_val)
+st.write("Predictions: ")
+st.code(y_pred)
+
+acc = accuracy_score(y_val, y_pred)
+st.write("Accuracy: ", acc)
+
 st.write("Classification Report")
-st.write("""\n\n                precision    recall  f1-score   support\n\nMedical Doctor       0.33      0.50      0.40         2\n\n         Other       0.95      0.84      0.89        25\n\n  Veterinarian       0.57      0.80      0.67         5\n\n      accuracy                           0.81        32\n\n                                                                                                  macro avg       0.62      0.71      0.65        32\n  weighted avg       0.86      0.81      0.83        32\n""")
-st.write("""
-                precision    recall  f1-score   support
-
-Medical Doctor       0.33      0.50      0.40         2
-         Other       0.95      0.84      0.89        25
-  Veterinarian       0.57      0.80      0.67         5
-
-      accuracy                           0.81        32
-     macro avg       0.62      0.71      0.65        32
-  weighted avg       0.86      0.81      0.83        32
-""")
-st.write()
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
 
 st.write("**MultinomialNB**")
-st.write("Accuracy: 0.78125")
-st.write("""
-                precision    recall  f1-score   support
+# initilize the MNB Classifier
+mnb_model = MultinomialNB()
 
-Medical Doctor       0.00      0.00      0.00         2
-         Other       0.78      1.00      0.88        25
-  Veterinarian       0.00      0.00      0.00         5
+# train the model on the training set
+mnb_model.fit(X_train, y_train)
 
-      accuracy                           0.78        32
-     macro avg       0.26      0.33      0.29        32
-  weighted avg       0.61      0.78      0.69        32
-""")
-st.write()
+# prdict labels for the validation set
+y_pred = mnb_model.predict(X_val)
 
-st.write("**kNN**")
-st.write("Accuracy: 0.78125")
-st.write("""
-                precision    recall  f1-score   support
+st.write("Predictions: ")
+st.code(y_pred)
 
-Medical Doctor       0.00      0.00      0.00         2
-         Other       0.78      1.00      0.88        25
-  Veterinarian       0.00      0.00      0.00         5
+acc = accuracy_score(y_val, y_pred)
+st.write("Accuracy: ", acc)
 
-      accuracy                           0.78        32
-     macro avg       0.26      0.33      0.29        32
-  weighted avg       0.61      0.78      0.69        32
-""")
-st.write()
+st.write("Classification Report")
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
 
-st.write("**AdaBoost**")
-st.write("Accuracy: 0.75")
-st.write("""
-                precision    recall  f1-score   support
+st.write("**kNN Model**")
+# initilize the kNN Classifier
+knn_model = KNeighborsClassifier()
 
-Medical Doctor       1.00      0.50      0.67         2
-         Other       0.79      0.92      0.85        25
-  Veterinarian       0.00      0.00      0.00         5
+# train the model on the training set
+knn_model.fit(X_train, y_train)
 
-      accuracy                           0.75        32
-     macro avg       0.60      0.47      0.51        32
-  weighted avg       0.68      0.75      0.71        32
-""")
-st.write()
+# prdict labels for the validation set
+y_pred = knn_model.predict(X_val)
 
-st.write("** Stacking (Combining kNN and XGBoost)**")
-st.write("Accuracy: 0.8125")
-st.write("""
-                precision    recall  f1-score   support
+st.write("Predictions: ")
+st.code(y_pred)
 
-Medical Doctor       0.33      0.50      0.40         2
-         Other       0.95      0.84      0.89        25
-  Veterinarian       0.57      0.80      0.67         5
+acc = accuracy_score(y_val, y_pred)
+st.write("Accuracy: ", acc)
 
-      accuracy                           0.81        32
-     macro avg       0.62      0.71      0.65        32
-  weighted avg       0.86      0.81      0.83        32
-""")
-st.write()
+st.write("Classification Report")
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+
+st.write("**AdaBoost Model**")
+# initilize the AdaBoost Classifier
+base_estimator = DecisionTreeClassifier(max_depth=1)
+adaboost = AdaBoostClassifier(estimator=base_estimator, n_estimators=100, learning_rate=1.0, random_state=42)
+
+# train the model on the training set
+adaboost.fit(X_train, y_train)
+
+# prdict labels for the validation set
+y_pred = adaboost.predict(X_val)
+
+st.write("Predictions: ")
+st.code(y_pred)
+
+acc = accuracy_score(y_val, y_pred)
+st.write("Accuracy: ", acc)
+
+st.write("Classification Report")
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+
+st.write("**Stacking (Combination of kNN and MultinomialNB)**")
+# initilize the Stacking Classifier
+models = [("MNB",mnb_model),("knn",knn_model)]
+meta_learner_reg = DecisionTreeClassifier(random_state=42)
+s_class = StackingClassifier(estimators=models, final_estimator=meta_learner_reg)
+
+# train the model on the training set
+s_class.fit(X_train, y_train)
+
+# prdict labels for the validation set
+y_pred = s_class.predict(X_val)
+
+st.write("Predictions: ")
+st.code(y_pred)
+
+acc = accuracy_score(y_val, y_pred)
+st.write("Accuracy: ", acc)
+
+st.write("Classification Report")
+st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
 
 st.write("This result is the best so far comparing the performance on all the classes")
 st.write("Checking the classifcation of each model, It is seen that the stacking classifier which makes use of Multinomial Naive Bayes and kNN Classifier performed best")
@@ -517,113 +546,17 @@ st.write("I will be going with the **Stacking Classifier**")
 
 st.header("Making Predictions")
 # get comment
-user_comments = st.text_input('Enter the user comment here')
+user_comments = st.text_area('Enter the user comments here')
+
+filepath = user_comments
+comment_header=None
+file_type = "text"
 
 
 
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-         
-
-# Header
-st.header('Module Importations and Data Retrieval')
-
-# Display text
-st.write('Streamlit is an open-source app framework for Machine Learning and Data Science projects.')
-
-# Create a dataframe
-df = pd.DataFrame({
-    'Column 1': np.random.randn(10),
-    'Column 2': np.random.randn(10)
-})
-
-# Display the dataframe
-st.write('Here is a random dataframe:')
-st.write(df)
-
-# Plotting
-st.write('Here is a simple line plot:')
-fig, ax = plt.subplots()
-ax.plot(df['Column 1'], label='Column 1')
-ax.plot(df['Column 2'], label='Column 2')
-ax.legend()
-st.pyplot(fig)
-
-# Add a slider
-slider_value = st.slider('Select a value', 0, 100, 50)
-st.write(f'Slider value is: {slider_value}')
-
-# Add a text input
-text_input = st.text_input('Enter some text')
-st.write(f'You entered: {text_input}')
-
-# Add a button
-if st.button('Click me'):
-    st.write('Button clicked!')
-
-# Add a selectbox
-option = st.selectbox('Select an option', ['Option 1', 'Option 2', 'Option 3'])
-st.write(f'You selected: {option}')
+if st.button("Make Prediction"):
+    prediction = get_overall_prediction(filepath, np, pd, re, string,
+                                         stopwords, vectorizer, encoder,
+                                         model, comment_header, file_type)
+    st.success(f"User category: {prediction}")
+    

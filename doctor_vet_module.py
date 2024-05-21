@@ -83,7 +83,7 @@ def get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
     return y_pred_class
 
 def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, encoder,
-                           model, comment_header="comments", csv=True):
+                           model, comment_header="comments", file_type="csv"):
     """
     This function takes in a link to a csv file ordataframe and predict users as either medical doctor,veterinarian or other based on their comments
     
@@ -97,44 +97,69 @@ def get_overall_prediction(file, np, pd, re, string, stopwords, vectorizer, enco
     Output
     (pandas dataframe): a copy of the datafrme containing the predictions in column named 'Predicted Label'
  """
-    if csv:
-        # create a dtaframe using the csv file
-        dataset = pd.read_csv(file)
+    if file_type != "text":
+        if file_type == "csv":
+            # create a dtaframe using the csv file
+            dataset = pd.read_csv(file)
+        elif file_type == "dataframe":
+            # make a copy of the dataframe
+            dataset = file.copy()
+
+        # initialize predictions as empty string
+        dataset.loc[:, "Predicted Label"] = ""
+
+        # loop through each group of comments to make prediction
+        for i in dataset.index:
+            # extract comments of current user
+            comments = dataset.loc[i, comment_header]
+
+            # create variable to store the orediction of each comment by the current user
+            predictions = np.array([])
+
+            # loop through comments made by the user user and make prediction on each
+            for comment in comments.split("|"):
+                # get prediction for the current comment
+                pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
+                                                  encoder, model)
+
+                # add the prediction to the list of predictions for comments made by current user
+                predictions = np.append(predictions, pred)
+
+                # if any of the prediction is Veterinarian, ignore the rest
+                if any(predictions == "Veterinarian"):
+                    dataset.loc[i, "Predicted Label"] = "Veterinarian"
+
+                # else if any of the prediction is Medical Doctor, ignore the rest
+                elif any(predictions == "Medical Doctor"):
+                    dataset.loc[i, "Predicted Label"] = "Medical Doctor"
+
+                # else predict the user as Other
+                else:
+                    dataset.loc[i, "Predicted Label"] = "Other"
+
+        # return the dataframe containing the predictions
+        return dataset
     else:
-        # make a copy of the dataframe
-        dataset = file.copy()
-    
-    # initialize predictions as empty string
-    dataset.loc[:, "Predicted Label"] = ""
-    
-    # loop through each group of comments to make prediction
-    for i in dataset.index:
-        # extract comments of current user
-        comments = dataset.loc[i, comment_header]
-        
-        # create variable to store the orediction of each comment by the current user
         predictions = np.array([])
-        
-        # loop through comments made by the user user and make prediction on each
-        for comment in comments.split("|"):
+        for comment in file.split("|"):
             # get prediction for the current comment
             pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
                                               encoder, model)
-            
+
             # add the prediction to the list of predictions for comments made by current user
             predictions = np.append(predictions, pred)
-            
+
             # if any of the prediction is Veterinarian, ignore the rest
             if any(predictions == "Veterinarian"):
-                dataset.loc[i, "Predicted Label"] = "Veterinarian"
-                
+                output  = "Veterinarian"
+
             # else if any of the prediction is Medical Doctor, ignore the rest
             elif any(predictions == "Medical Doctor"):
-                dataset.loc[i, "Predicted Label"] = "Medical Doctor"
-                
+                output = "Medical Doctor"
+
             # else predict the user as Other
             else:
-                dataset.loc[i, "Predicted Label"] = "Other"
-    
-    # return the dataframe containing the predictions
-    return dataset
+                output = "Other"
+
+        # return the dataframe containing the predictions
+        return output
