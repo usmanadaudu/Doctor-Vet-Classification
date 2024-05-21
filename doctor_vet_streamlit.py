@@ -45,7 +45,386 @@ engine =  create_engine(conn_str)
 
 st.write("First, lets take a look at the tables in the database")
 
+# define sql query for retrieving the tables in the database
+sql_for_tables = """
+SELECT
+    table_schema || '.' || table_name
+FROM
+    information_schema.tables
+WHERE
+    table_type = 'BASE TABLE'
+AND
+    table_schema NOT IN ('pg_catalog', 'information_schema');
+"""
 
+# retrieve the tables in a dataframe
+tables_df = pd.read_sql_query(sql_for_tables, engine)
+st.write(tables_df)
+
+st.write("""There are two tables in the database as shown above
+
+Each table would be saved in a pandas dataframe""")
+
+sql_for_table1 = """
+SELECT
+    *
+FROM
+    public.reddit_usernames_comments;
+"""
+user_comment_df = pd.read_sql_query(sql_for_table1, engine)
+
+sql_for_table2 = """
+SELECT
+    *
+FROM
+    public.reddit_usernames;
+"""
+user_info_df = pd.read_sql_query(sql_for_table2, engine)
+
+st.write("Lets take a look at the tables one after the other")
+st.write("First Table")
+st.write(user_comment_df.head())
+st.write("Shape: ", user_comment_df.shape)
+st.write("Second Table")
+st.write(user_info_df.head())
+st.write("Shape: ", user_info_df.shape)
+
+st.header("Data Exploration")
+st.write("""
+This table (now dataframe) contains usernames of users and their comments
+
+Lets look at a comment in order to understand how it is structured
+""")
+# print all comments by first user
+st.write("comments by first user")
+st.write([user_comment_df["comments"][0]])
+# split comments into individual comments
+first_comments = [user_comment_df["comments"][0].split("|")]
+
+# print the number of comments for first user
+st.write("Number of comments by first user: ", len(first_comments[0]))
+
+# remove repeated comments
+unique_comment = []
+for comment in first_comments[0]:
+    if comment in unique_comment:
+        continue
+    else:
+        unique_comment.append(comment)
+        
+st.write(f"Length of unique comments for first user: {len(unique_comment)}")
+st.write([" | ".join(unique_comment)])
+
+st.write("""It can be seen that the comment column contains multiple comments separated with "|"
+
+It can also be seen that there are repeated comments
+""")
+
+st.write("checking for missing and duplicated values shows that there are neither missing nor duplicated values in the data")
+
+st.write("Lets explore the second dataframe also")
+st.write(user_info_df.head())
+st.write("There are no missing values in this dataset also")
+
+st.header("Data Preprocessing")
+st.write("""
+for the preprocessing, the various steps that would be done are:\n
+1.  Removing web links\n
+2.  emoving file directories\n
+3.  Removing deleted comments indicated as'[deleted]'
+4.  Removing stopwords. Stopwords are:\n
+""", [stopwords.words('english')],"""
+5.  Removing punctuations
+6.  Removing non-alphabetic characters
+7.  Reducing multiple adjacent spaces to a single space
+8.  Reducing repeated comments to one
+""")
+def remove_web_link(text):
+    """
+    This function removes web links from texts
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all web links (if any) have been removed
+    """
+    text = re.sub(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+                  "", text.strip())
+    return text
+
+def remove_directories(text):
+    """
+    This function removes file directories from texts
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all file directories (if any) have been removed
+    """
+    text = re.sub(r"(/[a-zA-Z0-9_]+)+(/)*(.[a-zA-Z_]+)*",
+                  "", text).strip()
+    return text
+
+def remove_deleted_comments(text):
+    """
+    This function removes deleted comments indicated as "[deleted]"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all deleted comments (if any) have been removed
+    """
+    text = re.sub(r"\[deleted\]", "", text).strip()
+    return text
+
+def remove_stopwords(text):
+    """
+    This function removes stopwords from text"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all stopwords (if any) have been removed
+    """
+    # split the group of comments into separate comments
+    text_list = text.split("|")
+    
+    # get the stopwords for in English language
+    stop_words = set(stopwords.words('english'))
+    
+    # loop over each comment and remove any of the stopwords found
+    for i in range(len(text_list)):
+        text_list[i] = " ".join([word for word in text_list[i].split() if word.lower() not in stop_words])
+        
+    # merge the comments together using "|"
+    return " | ".join(text_list)
+
+def remove_punctuations(text):
+    """
+    This function removes punctuations from text"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all punctuations (if any) have been removed
+    """
+    # split the group of comments into separate comments
+    text_list = text.split("|")
+    
+    # loop over each comment and remove any of the punctuations found    
+    for i in range(len(text_list)):
+        text_list[i] = "". join([l if l not in string.punctuation else " " for l in text_list[i]])
+        
+    # merge the comments together using "|"
+    return " | ".join(text_list)
+
+def remove_non_alphabets(text):
+    """
+    This function removes non-alphabetic characters from text"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all non-alphabetic characters (if any) have been removed
+    """
+    # split the group of comments into separate comments
+    text_list = text.split("|")
+    
+    # loop over each comment and remove any of the non-alphabetic characters found 
+    for i in range(len(text_list)):
+        text_list[i] = re.sub(r"[^a-zA-Z ]", "", text_list[i].strip())
+        
+    # merge the comments together using "|"
+    return " | ".join(text_list)
+
+def remove_unneeded_spaces(text):
+    """
+    This function reduces multiple adjacent spaces to a single space in text"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all multiple spaces (if any) have been reduced to a single space
+    """
+    text = re.sub(r"(\s)+", " ", text).strip()
+    return text
+
+def remove_repeated_sentence(text):
+    """
+    This function removes repeated comments and preserves only the first one of them"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): text where all multiple comments (if any) have been reduced to a single comment
+    """    
+    # split the group of comments into separate comments
+    text_list = text.split("|")
+    
+    # create a variable to store unique comments found
+    unique_comment = []
+    
+    # loop over the comments and only store the first of any kind of comment
+    for comment in text_list:
+        # if the current comment has been seen earlier or is empty
+        # or just contains a single space
+        if (comment.strip() in unique_comment) or (comment == "") or (comment == " "):
+            # ignore the comment
+            continue
+        else:
+            # if it has not been seen add it to the list of unique comments
+            unique_comment.append(comment.strip())
+        
+    # merge the comments together using "|"
+    return " | ".join(unique_comment)
+
+def nlp_preprocessing(text):
+    """
+    This function applies preprocesses texts"
+    
+    Arg
+    text (string): text to be worked on
+    
+    output
+    (string): preprocessed text
+    """ 
+    # remove web links from text
+    text = remove_web_link(text)
+    
+    # remove file directories from text
+    text = remove_directories(text)
+    
+    # remove deleted comments in text
+    text = remove_deleted_comments(text)
+    
+    # remove english stopwords in texts
+    text = remove_stopwords(text)
+    
+    # remove punctuations in text
+    text = remove_punctuations(text)
+    
+    # remove non-alphabetic characters in text
+    text = remove_non_alphabets(text)
+    
+    # reduce multiple adjacent spaces to a single space
+    text = remove_unneeded_spaces(text)
+    
+    # remove repeated comments
+    text = remove_repeated_sentence(text)
+    
+    # convert all characters to lower case
+    text = text.lower()
+    
+    # return preprocessed text
+    return text
+
+
+
+st.write("Lets take a look at the text below and how it would look like after preprocessing")
+txt = """[deleted] | [deleted] | Got it. But why can I only select $1.99, $3.99 or $7.99 worth of MYST? Seems pretty strange imo. Why can’t we just send however much we like? Is there a way to just see our address and send whatever amount we choose? ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/izy2cgw/ | You’re a legend bro. Wonder why tf they don’t make this accessible, seems like a no brainer! ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/j0uh08x/ | Same problem here. WTF ---> /r/MysteriumNetwork/comments/zfm5ll/anyone_else_stuck_permanently_downloading_an/izxz9s6/ | UPDATE:
+
+Wow so i fixed it guys. I deleted the DNS in my Wi-Fi settings and after a new one was generated I hit apply. Then all of the sudden I was back online! My question is what in the world caused that to happen? I love Mysterium but feel very sketched out, yet idk if it was even their fault. What do you guys think? I’m skeptical of reinstalling it again. I had a some MYST in my account prior to uninstalling, I doubt I would get it back if I reinstalled right? Not the end of the world, I’m just happy to be online again although I missed a lot of meetings this morning. Really curious how this happened after enabling the kill switch, quitting and uninstalling. Lmk what you think. ---> /r/MysteriumNetwork/comments/xx6kgk/need_help_ever_since_i_enabled_kill_switch_i_cant/iraks5t/ | Feels like I’ve won the lottery. Now back to my minimum wage misery. ---> /r/MysteriumNetwork/comments/xx6kgk/need_help_ever_since_i_enabled_kill_switch_i_cant/irbgtx8/ | I did, no reply and it’s been a week ---> /r/MysteriumNetwork/comments/txk7ao/cant_connect_to_any_nodes_for_more_than_30/i3vsj5p/ | Wow that's so sketchy.. wtf? Now I'm really not touching this project. ---> /r/MysteriumNetwork/comments/twpgt1/psa_moderators_are_censoring_posts_on/i3kenty/ | Okay good to know, I jumped on a Russian node and started thinking twice lol. You think it’s safer going with residential nodes or no difference? 🥂 ---> /r/MysteriumNetwork/comments/tsbqed/security/i2wtq00/ | YES. Any more of a liability compared to something like ExpressVPN or any other popular centralized vpn? Given the nature of both i feel like it would be more prevalent with dVPNs but really don’t know ---> /r/MysteriumNetwork/comments/tsbqed/security/i2wu0ju/ | Wow! Yeah seems the returns with Mysterium aren't great, I would have to enable whitelisting as well. Helium is a cool project. I wanted to buy a miner and antenna but all of the miners were sold out with a 6 month waiting period. I talked to this guy who does free installs but takes like 80% of the rewards which seemed pointless. Monero mining I don't know anything about. I don't have a mining rig either, just an iMac but I have no issue buying the equipment if the returns are steady ---> /r/MysteriumNetwork/comments/tijvgl/best_ways_to_earn_supplemental_income_aside_from/i1ervof/ |  Yeah I think I am. Do you have any tips? I would be considered a noob but have good internet speeds and hardware. What kind of returns do you get? What are your thoughts on enabling whitelisting? Is it worthy the drop in MYST? ---> /r/MysteriumNetwork/comments/thwllq/mysterium_vs_orchid/i1cbhz0/ | Lol fair enough. Hows the returns with presearch? ---> /r/MysteriumNetwork/comments/thwllq/mysterium_vs_orchid/i1cvidl/ | Yeah it's bad. What's up with that? I hope they're at least working on something. They have no presence at all it's creepy. ---> /r/MysteriumNetwork/comments/thwllq/mysterium_vs_orchid/i2nxv92/ | What type of returns do you see? Do you have whitelisting enabled? ---> /r/MysteriumNetwork/comments/thwllq/mysterium_vs_orchid/i1e5qgv/
+
+
+Comment of user with index 306 [deleted]
+View in your timezone:  
+[March 21, 3 PM UTC][0]  
+
+[0]: https://timee.io/20240321T1500?tl=%F0%9F%8F%86%20Win%20a%20free%20SenseCAP%20M4%20Square%20in%20our%20Myst%20Nodes%20x%20SenseCAP%20AMA!%20%F0%9F%93%85%20March%2021%20%40%203%20PM%20UTC%20%F0%9F%93%8DMysterium%20Network%20Discord.%20Set%20your%20reminder%20now.|View in your timezone:  
+[18.12.2023 at 3 PM UTC][0]  [deleted]
+
+[0]: https://timee.io/20231218T1500?tl=%5BAMA%5D%20Kryptex%20X%20MystNodes%20partnership.%20Earn%20crypto%20passive%20income%2C%20simply.%20Join%20us%20live%20on%2018.12.2023%20at%203%20PM%20UTC%20and%20ask%20your%20questions%20now!|View in your timezone:  
+[23.08.2023 at 12 PM UTC][0]  [deleted]
+
+[0]: https://timee.io/20230823T1200?tl=%5BAMA%5D%20Meet%20the%20Future%20of%20VPN!%20We're%20Savannah%20and%20Furkan%20from%20MysteriumVPN.%20The%20People-Powered%20Alternative%20with%20More%20IPs%20Than%20Many%20Legacy%20VPNs%20Combined.%20Join%20Us%20Live%20on%2023.08%20%40%2012%20PM%20UTC%20and%20Ask%20Your%20Questions%20Now!|View in your timezone:  
+[23.08.2023 at 12 PM UTC][0][deleted]"""
+st.write(txt)
+st.write("After preprocessing")
+st.write(nlp_preprocessing(txt))
+
+st.write("Hand Engineering")
+st.write("I labbelled a number of samples by hand to form my training set")
+st.write("The way I went about this was that I first merged the two tables together as shown below")
+reddit_user_df = pd.merge(user_comment_df, user_info_df,
+                          on="username", how="left")
+st.write(reddit_user_df.head())
+st.write("Then I splitted all groups of comments into separate comments")
+reddit_user_df_processed = reddit_user_df.copy()
+reddit_user_df_processed["comments"] = reddit_user_df["comments"].apply(nlp_preprocessing)
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
 
 # Header
 st.header('Module Importations and Data Retrieval')
