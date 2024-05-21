@@ -1,0 +1,7 @@
+pickle
+numpy==1.26.1
+pandas==2.1.2
+xgboost==2.0.3
+nltk==3.8.1
+sqlalchemy
+sklearn==1.2.2
