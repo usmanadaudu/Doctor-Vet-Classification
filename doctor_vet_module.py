@@ -1,5 +1,5 @@
 
-def nlp_preprocessing(text, re, string, stopwords):
+def nlp_preprocessing(text, re, punctuations, stopwords):
     """
     This function applies preprocesses texts"
     
@@ -24,13 +24,13 @@ def nlp_preprocessing(text, re, string, stopwords):
     text_list = text.split("|")    # split the group of comments into separate comments
     
     for i in range(len(text_list)):    # loop over each comment and remove stopwords
-        text_list[i] = " ".join([word for word in text_list[i].split() if word.lower() not in stop_words])
+        text_list[i] = " ".join([word for word in text_list[i].split() if word.lower() not in stopwords])
     text = " | ".join(text_list)
     
     # remove punctuations in text
     text_list = text.split("|")
     for i in range(len(text_list)):    # loop over each comment and remove punctuations
-        text_list[i] = "". join([l if l not in string.punctuation else " " for l in text_list[i]])
+        text_list[i] = "". join([l if l not in punctuations else " " for l in text_list[i]])
     text = " | ".join(text_list)
     
     # remove non-alphabetic characters in text
@@ -62,13 +62,13 @@ def nlp_preprocessing(text, re, string, stopwords):
     # return preprocessed text
     return text
 
-def get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
+def get_prediction_per_comment(comment, re, punctuations, stopwords, vectorizer,
                                encoder, model):
     """
     This function will make prediction on single comment
     """
     # preprocess the comment
-    comment = nlp_preprocessing(comment, re, string, stopwords)
+    comment = nlp_preprocessing(comment, re, punctuations, stopwords)
     
     # vectorize the preprocessed comment
     X = vectorizer.transform([comment]).toarray()
@@ -82,7 +82,7 @@ def get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
     # return the class name
     return y_pred_class
 
-def get_overall_prediction(model_input, np, pd, re, string, stopwords, vectorizer, encoder,
+def get_overall_prediction(model_input, np, pd, re, punctuations, stopwords, vectorizer, encoder,
                            model, comment_header="comments", file_type="csv"):
     """
     This function takes in a link to a csv file ordataframe and predict users as either medical doctor,veterinarian or other based on their comments
@@ -119,7 +119,7 @@ def get_overall_prediction(model_input, np, pd, re, string, stopwords, vectorize
             # loop through comments made by the user user and make prediction on each
             for comment in comments.split("|"):
                 # get prediction for the current comment
-                pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
+                pred = get_prediction_per_comment(comment, re, punctuations, stopwords, vectorizer,
                                                   encoder, model)
 
                 # add the prediction to the list of predictions for comments made by current user
@@ -143,8 +143,8 @@ def get_overall_prediction(model_input, np, pd, re, string, stopwords, vectorize
         predictions = np.array([])
         for comment in model_input.split("|"):
             # get prediction for the current comment
-            pred = get_prediction_per_comment(comment, re, string, stopwords, vectorizer,
-                                              encoder, model)
+            pred = get_prediction_per_comment(comment, re, punctuations, stopwords,
+                                              vectorizer, encoder, model)
 
             # add the prediction to the list of predictions for comments made by current user
             predictions = np.append(predictions, pred)
