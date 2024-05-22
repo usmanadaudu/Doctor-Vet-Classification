@@ -378,7 +378,7 @@ user_separated_comment_dict = {
 }
 
 # loop through the first 5 data and save each comment as a separate entry
-for i in reddit_user_df_processed.index[:10]:
+for i in reddit_user_df_processed.index[]:
     for comment in reddit_user_df_processed.iloc[i]["comments"].split("|"):
         user_separated_comment_dict["username"].append(reddit_user_df_processed.iloc[i]["username"])
         user_separated_comment_dict["comment"].append(comment.strip())
@@ -388,7 +388,7 @@ for i in reddit_user_df_processed.index[:10]:
 # convert the dictionary above to pandas dataframe
 user_separated_comment_df = pd.DataFrame(user_separated_comment_dict)
 
-st.write(user_separated_comment_df)
+st.write(user_separated_comment_df.head(10))
 st.write("""
 'former_index' which is the index of corresponding sample in the unprocessed dataframe is added in order to aid during labelling
 
