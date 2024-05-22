@@ -295,45 +295,17 @@ def remove_repeated_sentence(text):
     # merge the comments together using "|"
     return " | ".join(unique_comment)
 
-# def nlp_preprocessing(text):
-#     """
-#     This function applies preprocesses texts"
+def nlp_preprocessing_second(text):
+    """
+    This function applies preprocesses texts"
     
-#     Arg
-#     text (string): text to be worked on
+    Arg
+    text (string): text to be worked on
     
-#     output
-#     (string): preprocessed text
-#     """ 
-#     # remove web links from text
-#     text = remove_web_link(text)
-    
-#     # remove file directories from text
-#     text = remove_directories(text)
-    
-#     # remove deleted comments in text
-#     text = remove_deleted_comments(text)
-    
-#     # remove english stopwords in texts
-#     text = remove_stopwords(text)
-    
-#     # remove punctuations in text
-#     text = remove_punctuations(text)
-    
-#     # remove non-alphabetic characters in text
-#     text = remove_non_alphabets(text)
-    
-#     # reduce multiple adjacent spaces to a single space
-#     text = remove_unneeded_spaces(text)
-    
-#     # remove repeated comments
-#     text = remove_repeated_sentence(text)
-    
-#     # convert all characters to lower case
-#     text = text.lower()
-    
-#     # return preprocessed text
-#     return text
+    output
+    (string): preprocessed text
+    """
+    return nlp_preprocessing(text, re, punctuations, stop_words)
 
 st.write("Lets take a look at the text below and how it would look like after preprocessing")
 txt = """[deleted] | [deleted] | Got it. But why can I only select $1.99, $3.99 or $7.99 worth of MYST? Seems pretty strange imo. Why can’t we just send however much we like? Is there a way to just see our address and send whatever amount we choose? ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/izy2cgw/ | You’re a legend bro. Wonder why tf they don’t make this accessible, seems like a no brainer! ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/j0uh08x/ | Same problem here. WTF ---> /r/MysteriumNetwork/comments/zfm5ll/anyone_else_stuck_permanently_downloading_an/izxz9s6/ | UPDATE:
@@ -365,7 +337,7 @@ reddit_user_df = pd.merge(user_comment_df, user_info_df,
 st.write(reddit_user_df.head())
 st.write("Then I splitted all groups of comments into separate comments")
 reddit_user_df_processed = reddit_user_df.copy()
-reddit_user_df_processed["comments"] = reddit_user_df["comments"].apply(nlp_preprocessing)
+reddit_user_df_processed["comments"] = reddit_user_df["comments"].apply(nlp_preprocessing_second)
 
 # create dictionary to store values for the new dataframe
 user_separated_comment_dict = {
