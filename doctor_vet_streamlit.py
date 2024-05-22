@@ -534,8 +534,10 @@ st.header("Making Predictions")
 
 # Custom CSS to style the teaxt area and button
 display_style = """
-
     <style>
+    div.stTextArea > div > textarea {
+        border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
+    }
     div.stTextArea > div > textarea:focus {
         border: 2px solid #d3d3d3; /* Ensuring border color remains light ash when focused */
         box-shadow: none; /* Removing default focus shadow if any */
