@@ -552,7 +552,7 @@ display_style = """
     }
 
     /* Text area styling */
-    .stTextArea textarea {
+    .element-container:has(>.stTextArea), .stTextArea {
         border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
     }
     .stTextArea textarea:focus, 
