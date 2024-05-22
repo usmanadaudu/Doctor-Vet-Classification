@@ -546,6 +546,10 @@ button_style = """
         color: white;           /* Set the text color to white */
         border: 2px solid blue; /* Set the border color and width */
     }
+    div.stButton > button:hover {
+        background-color: darkblue; /* Set the hover background color to dark blue */
+        border: 2px solid darkblue; /* Set the hover border color to dark blue */
+    }
     </style>
     """
 
