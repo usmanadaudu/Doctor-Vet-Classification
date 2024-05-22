@@ -536,22 +536,23 @@ st.header("Making Predictions")
 display_style = """
 
     <style>
-    div.stTextArea > div > textarea {
-        border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
+    div.stTextArea > div > textarea:focus {
+        border: 2px solid #d3d3d3; /* Ensuring border color remains light ash when focused */
+        box-shadow: none; /* Removing default focus shadow if any */
     }
     div.stButton > button {
-        background-color: blue; /* Set the background color to blue */
-        color: white;           /* Set the text color to white */
-        border: 2px solid blue; /* Set the border color and width */
+        background-color: blue; /* Setting the background color to blue */
+        color: white;           /* Setting the text color to white */
+        border: 2px solid blue; /* Setting the border color and width */
     }
     div.stButton > button:hover {
-        background-color: darkblue; /* Set the hover background color to dark blue */
-        border: 2px solid darkblue; /* Set the hover border color to dark blue */
+        background-color: darkblue; /* Setting the hover background color to dark blue */
+        border: 2px solid darkblue; /* Setting the hover border color to dark blue */
     }
     div.stButton > button:active, div.stButton > button:focus {
-        background-color: blue; /* Maintain background color when clicked or focused */
-        color: white;           /* Maintain text color when clicked or focused */
-        border: 2px solid blue; /* Maintain border color when clicked or focused */
+        background-color: blue; /* Maintaining background color when clicked or focused */
+        color: white;           /* Maintaining text color when clicked or focused */
+        border: 2px solid blue; /* Maintaining border color when clicked or focused */
     }
     </style>
     """
