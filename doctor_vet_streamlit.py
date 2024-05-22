@@ -338,25 +338,10 @@ st.write(reddit_user_df.head())
 st.write("Then I splitted all groups of comments into separate comments")
 reddit_user_df_processed = reddit_user_df.copy()
 reddit_user_df_processed["comments"] = reddit_user_df["comments"].apply(nlp_preprocessing_second)
-
-# create dictionary to store values for the new dataframe
-user_separated_comment_dict = {
-    "username" : [],
-    "comment" : [],
-    "subreddit" : [],
-    "former_index" : []
-}
-
-# loop through the first 5 data and save each comment as a separate entry
-for i in reddit_user_df_processed.index:
-    for comment in reddit_user_df_processed.iloc[i]["comments"].split("|"):
-        user_separated_comment_dict["username"].append(reddit_user_df_processed.iloc[i]["username"])
-        user_separated_comment_dict["comment"].append(comment.strip())
-        user_separated_comment_dict["subreddit"].append(reddit_user_df_processed.iloc[i]["subreddit"])
-        user_separated_comment_dict["former_index"].append(i)
         
-# convert the dictionary above to pandas dataframe
-user_separated_comment_df = pd.DataFrame(user_separated_comment_dict)
+# initialize vactorizer for the comments
+with open("user_separated_comment_df.pkl", "rb") as file:
+    user_separated_comment_df = pickle.load(file)
 
 st.write(user_separated_comment_df.head(10))
 st.write("""
