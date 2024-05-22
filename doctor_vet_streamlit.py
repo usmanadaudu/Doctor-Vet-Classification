@@ -399,7 +399,7 @@ st.write("The training set was splitted into 80% for training set and 20% for va
 # import the training dataset
 data = pd.read_csv("train_set.csv")
 # add the preprocessed comments as a new column in the dataframe
-data["processed_comment"] = data["comment"].apply(nlp_preprocessing)
+data["processed_comment"] = data["comment"].apply(nlp_preprocessing_second)
 # initialize vactorizer for the comments
 with open("vectorizer.pkl", "rb") as file:
     vectorizer = pickle.load(file)
