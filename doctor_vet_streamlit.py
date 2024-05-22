@@ -550,7 +550,13 @@ button_style = """
         background-color: darkblue; /* Set the hover background color to dark blue */
         border: 2px solid darkblue; /* Set the hover border color to dark blue */
     }
+    div.stButton > button:active, div.stButton > button:focus {
+        background-color: blue; /* Maintain background color when clicked or focused */
+        color: white;           /* Maintain text color when clicked or focused */
+        border: 2px solid blue; /* Maintain border color when clicked or focused */
+    }
     </style>
+    """yle>
     """
 
 # Injecting the custom CSS
