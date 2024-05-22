@@ -1,7 +1,6 @@
 # import modules
 import re             # for regrex operations
 import pickle
-import string         # for removing punctuations
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
 import streamlit as st
@@ -144,7 +143,9 @@ stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you'
 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
 st.code(stop_words, language="text")
 st.write("""
-5.  Removing punctuations
+5.  Removing punctuations""")
+punctuations = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+st.write("""
 6.  Removing non-alphabetic characters
 7.  Reducing multiple adjacent spaces to a single space
 8.  Reducing repeated comments to one
@@ -220,8 +221,6 @@ def remove_punctuations(text):
     output
     (string): text where all punctuations (if any) have been removed
     """
-    punctuations = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-
     # split the group of comments into separate comments
     text_list = text.split("|")
     
@@ -542,7 +541,7 @@ file_type = "text"
 
 
 if st.button("Make Prediction", type="primary"):
-    prediction = get_overall_prediction(filepath, np, pd, re, string,
+    prediction = get_overall_prediction(filepath, np, pd, re, punctuations,
                                          stop_words, vectorizer, encoder,
                                          model, comment_header, file_type)
     st.success(f"User category: {prediction}")
