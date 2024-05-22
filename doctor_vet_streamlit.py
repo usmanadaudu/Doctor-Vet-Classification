@@ -1,27 +1,12 @@
 # import modules
 import re             # for regrex operations
-import nltk
 import pickle
 import string         # for removing punctuations
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
 import streamlit as st
-from xgboost import XGBClassifier                 # XGBoost model
-from nltk.corpus import stopwords                 # for getting stopwords
-from sqlalchemy import create_engine              # for connecting to database
-from sklearn.metrics import accuracy_score        # for getting prediction accuracy
-from sklearn.naive_bayes import MultinomialNB     # Multinimial Naive Bayes model
-from sklearn.preprocessing import LabelEncoder    # for encoding target class
-from sklearn.ensemble import AdaBoostClassifier   # AdaBoost model
-from sklearn.tree import DecisionTreeClassifier   # Decision Tree model
-from sklearn.ensemble import StackingClassifier   # Stacking Ensemble model
-from sklearn.metrics import classification_report     # for generating classification report
-from doctor_vet_module import nlp_preprocessing
-from sklearn.neighbors import KNeighborsClassifier    # k Nearest Neighbour model
-from sklearn.model_selection import train_test_split  # for splitting into trainning and test set
 from doctor_vet_module import get_overall_prediction
 from doctor_vet_module import get_prediction_per_comment
-from sklearn.feature_extraction.text import TfidfVectorizer  # for vectorizing words
 
 # Title of the app
 st.title("Doctor and Veterinary Classification")
@@ -140,12 +125,23 @@ for the preprocessing, the various steps that would be done are:\n
 2.  emoving file directories\n
 3.  Removing deleted comments indicated as'[deleted]'
 4.  Removing stopwords. Stopwords are:""")
-try:
-    stopwords.words('english')
-except LookupError:
-    st.write("Downloading NLTK stopwords...")
-    nltk.download('stopwords')
-stop_words = set(stopwords.words('english'))
+stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you',
+"you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he',
+'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its',
+'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who',
+'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were',
+'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing',
+'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of',
+'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during',
+'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on',
+'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when',
+'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other',
+'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+'s', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll',
+'m', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't",
+'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
+'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't",
+'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
 st.code(stop_words, language="text")
 st.write("""
 5.  Removing punctuations
@@ -207,9 +203,6 @@ def remove_stopwords(text):
     # split the group of comments into separate comments
     text_list = text.split("|")
     
-    # get the stopwords for in English language
-    stop_words = set(stopwords.words('english'))
-    
     # loop over each comment and remove any of the stopwords found
     for i in range(len(text_list)):
         text_list[i] = " ".join([word for word in text_list[i].split() if word.lower() not in stop_words])
@@ -227,12 +220,14 @@ def remove_punctuations(text):
     output
     (string): text where all punctuations (if any) have been removed
     """
+    punctuations = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
     # split the group of comments into separate comments
     text_list = text.split("|")
     
     # loop over each comment and remove any of the punctuations found    
     for i in range(len(text_list)):
-        text_list[i] = "". join([l if l not in string.punctuation else " " for l in text_list[i]])
+        text_list[i] = "". join([l if l not in punctuations else " " for l in text_list[i]])
         
     # merge the comments together using "|"
     return " | ".join(text_list)
@@ -382,8 +377,8 @@ user_separated_comment_dict = {
     "former_index" : []
 }
 
-# loop through the data and save each comment as a separate entry
-for i in reddit_user_df_processed.index:
+# loop through the first 5 data and save each comment as a separate entry
+for i in reddit_user_df_processed.index[:10]:
     for comment in reddit_user_df_processed.iloc[i]["comments"].split("|"):
         user_separated_comment_dict["username"].append(reddit_user_df_processed.iloc[i]["username"])
         user_separated_comment_dict["comment"].append(comment.strip())
@@ -393,7 +388,7 @@ for i in reddit_user_df_processed.index:
 # convert the dictionary above to pandas dataframe
 user_separated_comment_df = pd.DataFrame(user_separated_comment_dict)
 
-st.write(user_separated_comment_df.head(10))
+st.write(user_separated_comment_df)
 st.write("""
 'former_index' which is the index of corresponding sample in the unprocessed dataframe is added in order to aid during labelling
 
@@ -448,18 +443,9 @@ with open("doctor_vet_model.pkl", "rb") as file:
 X = vectorizer.fit_transform(data["processed_comment"].values).toarray()
 labels = data["Label"]
 y = encoder.fit_transform(labels)
-# split dataset into training and validation sets
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
 st.write("The various model built and their performances are summarized below")
 st.write("**XGBoost**")
-# initilize the XFBoost Classifier
-xgb_model = XGBClassifier()
-
-# train the model on the training set
-xgb_model.fit(X_train, y_train)
-
-# prdict labels for the validation set
-y_pred = xgb_model.predict(X_val)
 st.write("Predictions: ")
 st.code("[1 0 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1]")
 
@@ -477,83 +463,68 @@ Medical Doctor       1.00      0.50      0.67         2
   weighted avg       0.68      0.75      0.71        32""")
 
 st.write("**MultinomialNB**")
-# initilize the MNB Classifier
-mnb_model = MultinomialNB()
-
-# train the model on the training set
-mnb_model.fit(X_train, y_train)
-
-# prdict labels for the validation set
-y_pred = mnb_model.predict(X_val)
-
 st.write("Predictions: ")
-st.code(y_pred)
-
-acc = accuracy_score(y_val, y_pred)
-st.write("Accuracy: ", acc)
+st.code("[1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]")
+st.write("Accuracy: ", 0.78125)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_, zero_division=0)}")
+st.code(f""".                precision    recall  f1-score   support
+
+Medical Doctor       0.00      0.00      0.00         2
+         Other       0.78      1.00      0.88        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.78        32
+     macro avg       0.26      0.33      0.29        32
+  weighted avg       0.61      0.78      0.69        32""")
 
 st.write("**kNN Model**")
-# initilize the kNN Classifier
-knn_model = KNeighborsClassifier()
-
-# train the model on the training set
-knn_model.fit(X_train, y_train)
-
-# prdict labels for the validation set
-y_pred = knn_model.predict(X_val)
-
 st.write("Predictions: ")
-st.code(y_pred)
-
-acc = accuracy_score(y_val, y_pred)
-st.write("Accuracy: ", acc)
+st.code("[1 0 1 1 1 1 1 1 1 0 1 1 0 1 1 1 0 1 1 0 0 1 1 2 1 1 1 1 1 1 1 1]")
+st.write("Accuracy: ", 0.78125)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+st.code(f""".                precision    recall  f1-score   support
+
+Medical Doctor       0.17      0.50      0.25         2
+         Other       0.92      0.92      0.92        25
+  Veterinarian       1.00      0.20      0.33         5
+
+      accuracy                           0.78        32
+     macro avg       0.70      0.54      0.50        32
+  weighted avg       0.89      0.78      0.79        32""")
 
 st.write("**AdaBoost Model**")
-# initilize the AdaBoost Classifier
-base_estimator = DecisionTreeClassifier(max_depth=1)
-adaboost = AdaBoostClassifier(estimator=base_estimator, n_estimators=100, learning_rate=1.0, random_state=42)
-
-# train the model on the training set
-adaboost.fit(X_train, y_train)
-
-# prdict labels for the validation set
-y_pred = adaboost.predict(X_val)
-
 st.write("Predictions: ")
-st.code(y_pred)
-
-acc = accuracy_score(y_val, y_pred)
-st.write("Accuracy: ", acc)
+st.code("[1 0 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1]")
+st.write("Accuracy: ", 0.75)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+st.code(f""".                precision    recall  f1-score   support
+
+Medical Doctor       1.00      0.50      0.67         2
+         Other       0.79      0.92      0.85        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.75        32
+     macro avg       0.60      0.47      0.51        32
+  weighted avg       0.68      0.75      0.71        32""")
 
 st.write("**Stacking (Combination of kNN and MultinomialNB)**")
-# initilize the Stacking Classifier
-models = [("MNB",mnb_model),("knn",knn_model)]
-meta_learner_reg = DecisionTreeClassifier(random_state=42)
-s_class = StackingClassifier(estimators=models, final_estimator=meta_learner_reg)
-
-# train the model on the training set
-s_class.fit(X_train, y_train)
-
-# prdict labels for the validation set
-y_pred = s_class.predict(X_val)
-
 st.write("Predictions: ")
-st.code(y_pred)
-
-acc = accuracy_score(y_val, y_pred)
-st.write("Accuracy: ", acc)
+st.code("[1 0 0 1 1 1 1 1 0 0 1 1 2 1 2 1 2 1 1 2 2 1 2 2 1 2 1 1 1 0 1 1]")
+st.write("Accuracy: ", 0.71875)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+st.code(f""".                precision    recall  f1-score   support
+
+Medical Doctor       0.20      0.50      0.29         2
+         Other       0.95      0.72      0.82        25
+  Veterinarian       0.50      0.80      0.62         5
+
+      accuracy                           0.72        32
+     macro avg       0.55      0.67      0.57        32
+  weighted avg       0.83      0.72      0.75        32""")
 
 st.write("This result is the best so far comparing the performance on all the classes")
 st.write("Checking the classifcation of each model, It is seen that the stacking classifier which makes use of Multinomial Naive Bayes and kNN Classifier performed best")
@@ -572,7 +543,7 @@ file_type = "text"
 
 if st.button("Make Prediction", type="primary"):
     prediction = get_overall_prediction(filepath, np, pd, re, string,
-                                         stopwords, vectorizer, encoder,
+                                         stop_words, vectorizer, encoder,
                                          model, comment_header, file_type)
     st.success(f"User category: {prediction}")
     
