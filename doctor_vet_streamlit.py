@@ -556,7 +556,6 @@ button_style = """
         border: 2px solid blue; /* Maintain border color when clicked or focused */
     }
     </style>
-    """yle>
     """
 
 # Injecting the custom CSS
