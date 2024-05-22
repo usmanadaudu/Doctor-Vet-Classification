@@ -512,8 +512,10 @@ display_style = """
 # Injecting the custom CSS
 st.markdown(display_style, unsafe_allow_html=True)
 
+st.write('Enter the user comments here (Separate multiple comments by same user with "|")\ne.g. I treated a pet | I work in a small clinic | I would going on vacation tomorrow')
+
 # get comment
-user_comments = st.text_area('Enter the user comments here (Separate multiple comments by same user with "|")\ne.g. I treated a pet | I work in a small clinic | I would going on vacation tomorrow')
+user_comments = st.text_area()
 
 filepath = user_comments
 comment_header=None
