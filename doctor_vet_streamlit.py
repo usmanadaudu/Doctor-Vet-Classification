@@ -4,6 +4,7 @@ import pickle
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
 import streamlit as st
+from doctor_vet_module import nlp_preprocessing
 from doctor_vet_module import get_overall_prediction
 from doctor_vet_module import get_prediction_per_comment
 
@@ -294,47 +295,45 @@ def remove_repeated_sentence(text):
     # merge the comments together using "|"
     return " | ".join(unique_comment)
 
-def nlp_preprocessing(text):
-    """
-    This function applies preprocesses texts"
+# def nlp_preprocessing(text):
+#     """
+#     This function applies preprocesses texts"
     
-    Arg
-    text (string): text to be worked on
+#     Arg
+#     text (string): text to be worked on
     
-    output
-    (string): preprocessed text
-    """ 
-    # remove web links from text
-    text = remove_web_link(text)
+#     output
+#     (string): preprocessed text
+#     """ 
+#     # remove web links from text
+#     text = remove_web_link(text)
     
-    # remove file directories from text
-    text = remove_directories(text)
+#     # remove file directories from text
+#     text = remove_directories(text)
     
-    # remove deleted comments in text
-    text = remove_deleted_comments(text)
+#     # remove deleted comments in text
+#     text = remove_deleted_comments(text)
     
-    # remove english stopwords in texts
-    text = remove_stopwords(text)
+#     # remove english stopwords in texts
+#     text = remove_stopwords(text)
     
-    # remove punctuations in text
-    text = remove_punctuations(text)
+#     # remove punctuations in text
+#     text = remove_punctuations(text)
     
-    # remove non-alphabetic characters in text
-    text = remove_non_alphabets(text)
+#     # remove non-alphabetic characters in text
+#     text = remove_non_alphabets(text)
     
-    # reduce multiple adjacent spaces to a single space
-    text = remove_unneeded_spaces(text)
+#     # reduce multiple adjacent spaces to a single space
+#     text = remove_unneeded_spaces(text)
     
-    # remove repeated comments
-    text = remove_repeated_sentence(text)
+#     # remove repeated comments
+#     text = remove_repeated_sentence(text)
     
-    # convert all characters to lower case
-    text = text.lower()
+#     # convert all characters to lower case
+#     text = text.lower()
     
-    # return preprocessed text
-    return text
-
-
+#     # return preprocessed text
+#     return text
 
 st.write("Lets take a look at the text below and how it would look like after preprocessing")
 txt = """[deleted] | [deleted] | Got it. But why can I only select $1.99, $3.99 or $7.99 worth of MYST? Seems pretty strange imo. Why can’t we just send however much we like? Is there a way to just see our address and send whatever amount we choose? ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/izy2cgw/ | You’re a legend bro. Wonder why tf they don’t make this accessible, seems like a no brainer! ---> /r/MysteriumNetwork/comments/zk6hag/how_to_send_myst_to_application/j0uh08x/ | Same problem here. WTF ---> /r/MysteriumNetwork/comments/zfm5ll/anyone_else_stuck_permanently_downloading_an/izxz9s6/ | UPDATE:
@@ -356,7 +355,7 @@ View in your timezone:
 [23.08.2023 at 12 PM UTC][0][deleted]"""
 st.code(txt, language="text")
 st.write("After preprocessing")
-st.code(nlp_preprocessing(txt), language="text")
+st.code(nlp_preprocessing(txt, re, punctuations, stop_words), language="text")
 
 st.header("Hand Engineering")
 st.write("I labelled a number of samples by hand to form my training set")
