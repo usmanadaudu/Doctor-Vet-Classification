@@ -538,7 +538,18 @@ filepath = user_comments
 comment_header=None
 file_type = "text"
 
+# Custom CSS to change the button color
+button_style = """
+    <style>
+    div.stButton > button {
+        background-color: blue;
+        color: white;
+    }
+    </style>
+    """
 
+# Injecting the custom CSS
+st.markdown(button_style, unsafe_allow_html=True)
 
 if st.button("Make Prediction", type="primary"):
     prediction = get_overall_prediction(filepath, np, pd, re, punctuations,
