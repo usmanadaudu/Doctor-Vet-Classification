@@ -22,7 +22,7 @@ def nlp_preprocessing(text, re, string, stopwords):
     
     # remove english stopwords in texts
     text_list = text.split("|")    # split the group of comments into separate comments
-    stop_words = set(stopwords.words('english'))    # get the stopwords for in English language
+    
     for i in range(len(text_list)):    # loop over each comment and remove stopwords
         text_list[i] = " ".join([word for word in text_list[i].split() if word.lower() not in stop_words])
     text = " | ".join(text_list)
