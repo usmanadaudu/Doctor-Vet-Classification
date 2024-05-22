@@ -1,13 +1,13 @@
 # import modules
 import re             # for regrex operations
+import nltk
 import pickle
 import string         # for removing punctuations
 import numpy as np    # for mathematical calculations
 import pandas as pd   # for working with structured data (dataframes)
 import streamlit as st
 from xgboost import XGBClassifier                 # XGBoost model
-# from nltk.corpus import stopwords                 # for getting stopwords
-import nltk
+from nltk.corpus import stopwords                 # for getting stopwords
 from sqlalchemy import create_engine              # for connecting to database
 from sklearn.metrics import accuracy_score        # for getting prediction accuracy
 from sklearn.naive_bayes import MultinomialNB     # Multinimial Naive Bayes model
@@ -140,7 +140,13 @@ for the preprocessing, the various steps that would be done are:\n
 2.  emoving file directories\n
 3.  Removing deleted comments indicated as'[deleted]'
 4.  Removing stopwords. Stopwords are:""")
-st.code(nltk.corpus.stopwords.words('english'), language="text")
+try:
+    stopwords.words('english')
+except LookupError:
+    st.write("Downloading NLTK stopwords...")
+    nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+st.code(stop_words, language="text")
 st.write("""
 5.  Removing punctuations
 6.  Removing non-alphabetic characters
