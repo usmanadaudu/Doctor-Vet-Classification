@@ -531,16 +531,14 @@ st.write("It was also found that the performance of the Multinomial Model was ex
 st.write("I will be going with the **Stacking Classifier**")
 
 st.header("Making Predictions")
-# get comment
-user_comments = st.text_area('Enter the user comments here')
 
-filepath = user_comments
-comment_header=None
-file_type = "text"
+# Custom CSS to style the teaxt area and button
+display_style = """
 
-# Custom CSS to change the button color
-button_style = """
     <style>
+    div.stTextArea > div > textarea {
+        border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
+    }
     div.stButton > button {
         background-color: blue; /* Set the background color to blue */
         color: white;           /* Set the text color to white */
@@ -559,7 +557,14 @@ button_style = """
     """
 
 # Injecting the custom CSS
-st.markdown(button_style, unsafe_allow_html=True)
+st.markdown(display_style, unsafe_allow_html=True)
+
+# get comment
+user_comments = st.text_area('Enter the user comments here')
+
+filepath = user_comments
+comment_header=None
+file_type = "text"
 
 if st.button("Make Prediction", type="primary"):
     prediction = get_overall_prediction(filepath, np, pd, re, punctuations,
