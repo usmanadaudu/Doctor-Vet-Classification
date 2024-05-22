@@ -463,11 +463,18 @@ y_pred = xgb_model.predict(X_val)
 st.write("Predictions: ")
 st.code("[1 0 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1]")
 
-acc = accuracy_score(y_val, y_pred)
-st.write("Accuracy: ", acc)
+st.write("Accuracy: ", 0.75)
 
 st.write("Classification Report")
-st.code(f".{classification_report(y_val, y_pred, target_names=encoder.classes_)}")
+st.code(f""".                precision    recall  f1-score   support
+
+Medical Doctor       1.00      0.50      0.67         2
+         Other       0.79      0.92      0.85        25
+  Veterinarian       0.00      0.00      0.00         5
+
+      accuracy                           0.75        32
+     macro avg       0.60      0.47      0.51        32
+  weighted avg       0.68      0.75      0.71        32""")
 
 st.write("**MultinomialNB**")
 # initilize the MNB Classifier
