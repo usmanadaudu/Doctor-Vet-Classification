@@ -378,7 +378,7 @@ user_separated_comment_dict = {
 }
 
 # loop through the first 5 data and save each comment as a separate entry
-for i in reddit_user_df_processed.index[]:
+for i in reddit_user_df_processed.index:
     for comment in reddit_user_df_processed.iloc[i]["comments"].split("|"):
         user_separated_comment_dict["username"].append(reddit_user_df_processed.iloc[i]["username"])
         user_separated_comment_dict["comment"].append(comment.strip())
