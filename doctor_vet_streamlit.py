@@ -351,7 +351,7 @@ Processed comments usually loose meaning or context when read by humans. Therefo
 """)
 st.write("Looking at the number comments in each of the subreddits as shown below")
 st.write(user_separated_comment_df['subreddit'].value_counts())
-st.write("I chose all the medicine, vet, HeliumNetwork and orchid subreddits because there are less than 30 comments in these subreddits. Then, I chose 30 comments in each of the MysteriumNetwork subreddit and Veterinary")
+st.write("I chose all the medicine, vet, HeliumNetwork and orchid subreddits because there are less than 50 comments in these subreddits. Then, I chose 50 comments in each of the MysteriumNetwork subreddit and Veterinary (Values may have changed later. This was as at when building the model)")
 
 st.write("The first 5 entries in the training set after labelling are shown below")
 train_set_df = pd.read_csv("train_set.csv")
