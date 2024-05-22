@@ -542,8 +542,9 @@ file_type = "text"
 button_style = """
     <style>
     div.stButton > button {
-        background-color: blue;
-        color: white;
+        background-color: blue; /* Set the background color to blue */
+        color: white;           /* Set the text color to white */
+        border: 2px solid blue; /* Set the border color and width */
     }
     </style>
     """
