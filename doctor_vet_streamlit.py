@@ -552,11 +552,11 @@ display_style = """
     }
 
     /* Text area styling */
-    div.stTextArea > div > textarea {
+    .stTextArea textarea {
         border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
     }
-    div.stTextArea > textarea:focus, 
-    div.stTextArea > textarea:active {
+    .stTextArea textarea:focus, 
+    .stTextArea textarea:active {
         border: 2px solid #d3d3d3; /* Ensure border color remains light ash when focused or active */
         box-shadow: none; /* Remove default focus shadow if any */
     }
