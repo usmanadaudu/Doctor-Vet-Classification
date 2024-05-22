@@ -513,7 +513,7 @@ display_style = """
 st.markdown(display_style, unsafe_allow_html=True)
 
 # get comment
-user_comments = st.text_area('Enter the user comments here e.g. I treated a pet')
+user_comments = st.text_area('Enter the user comments here (Separate multiple comments by same user with "|")\ne.g. I treated a pet | I work in a small clinic | I would going on vacation tomorrow')
 
 filepath = user_comments
 comment_header=None
