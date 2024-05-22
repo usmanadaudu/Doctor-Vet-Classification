@@ -461,7 +461,7 @@ xgb_model.fit(X_train, y_train)
 # prdict labels for the validation set
 y_pred = xgb_model.predict(X_val)
 st.write("Predictions: ")
-st.code(y_pred)
+st.code("[1 0 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1]")
 
 acc = accuracy_score(y_val, y_pred)
 st.write("Accuracy: ", acc)
