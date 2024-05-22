@@ -550,16 +550,6 @@ display_style = """
         color: white;           /* Maintain text color when clicked or focused */
         border: 2px solid blue; /* Maintain border color when clicked or focused */
     }
-
-    /* Text area styling */
-    .element-container:has(>.stTextArea), .stTextArea {
-        border: 2px solid #d3d3d3; /* Set the border color to light ash (light gray) */
-    }
-    .stTextArea textarea:focus, 
-    .stTextArea textarea:active {
-        border: 2px solid #d3d3d3; /* Ensure border color remains light ash when focused or active */
-        box-shadow: none; /* Remove default focus shadow if any */
-    }
     </style>
     """
 
