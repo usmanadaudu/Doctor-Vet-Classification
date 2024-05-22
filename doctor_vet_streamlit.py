@@ -41,12 +41,12 @@ st.write("The link given raises error when trying to connect, so I used a modifi
 st.code("postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow")
 
 # define the connection link to database
-conn_str = "postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow"
+# conn_str = "postgresql://niphemi.oyewole:endpoint=ep-delicate-river-a5cq94ee-pooler;W7bHIgaN1ejh@ep-delicate-river-a5cq94ee-pooler.us-east-2.aws.neon.tech/Vetassist?sslmode=allow"
 
 # create connection to the databse
-engine =  create_engine(conn_str)
+# engine =  create_engine(conn_str)
 
-st.write("First, lets take a look at the tables in the database")
+# st.write("First, lets take a look at the tables in the database")
 
 # define sql query for retrieving the tables in the database
 sql_for_tables = """
@@ -61,8 +61,8 @@ AND
 """
 
 # retrieve the tables in a dataframe
-tables_df = pd.read_sql_query(sql_for_tables, engine)
-st.write(tables_df)
+# tables_df = pd.read_sql_query(sql_for_tables, engine)
+# st.write(tables_df)
 
 st.write("""There are two tables in the database
 
@@ -75,8 +75,8 @@ FROM
     public.reddit_usernames_comments;
 """
 # if the table cannot be rerieved from the database, use the csv file saved
-user_comment_df = pd.read_sql_query(sql_for_table1, engine)
-# user_comment_df = pd.read_csv("reddit_usernames_comments.csv")
+# user_comment_df = pd.read_sql_query(sql_for_table1, engine)
+user_comment_df = pd.read_csv("https://raw.githubusercontent.com/usmanadaudu/Doctor-Vet-Classification/main/reddit_usernames_comments.csv")
 
 sql_for_table2 = """
 SELECT
@@ -85,8 +85,8 @@ FROM
     public.reddit_usernames;
 """
 # if the table cannot be rerieved from the database, use the csv file saved
-user_info_df = pd.read_sql_query(sql_for_table2, engine)
-# user_info_df = pd.read_csv("reddit_usernames.csv")
+# user_info_df = pd.read_sql_query(sql_for_table2, engine)
+user_info_df = pd.read_csv("https://raw.githubusercontent.com/usmanadaudu/Doctor-Vet-Classification/main/reddit_usernames.csv")
 
 st.write("Lets take a look at the tables one after the other")
 st.write("First Table")
